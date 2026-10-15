@@ -85,12 +85,12 @@ error: profile "desktop" is managed exclusively by the Electron application
 
 `desktop` profile 只归 Electron 应用自己管——它会重写 profile 的 `package.json`、自己维护 bundle 列表，CLI 插手会和它打架。所以这条命令**只对 headless 之类的自定义 profile 有意义**；桌面端请用上面的脚本或应用内插件管理器。
 
-`dsh` 不是全局命令时，可以这样调（用 Electron 本体当 node 跑 CLI）：
+`dsh` 不是全局命令时，可以这样调（用 Electron 本体当 node 跑 CLI），把下面的 `<DSH 安装目录>` 换成你自己的 DSH 安装位置：
 
 ```powershell
 $env:ELECTRON_RUN_AS_NODE = '1'
-& 'D:\DeepSeek Harness\DeepSeek Harness.exe' `
-  'D:\DeepSeek Harness\resources\app.asar\dsh\node_modules\@deepseek-ai\dsh\lib\bin.js' --help
+& '<DSH 安装目录>\DeepSeek Harness.exe' `
+  '<DSH 安装目录>\resources\app.asar\dsh\node_modules\@deepseek-ai\dsh\lib\bin.js' --help
 ```
 
 ### 从零开始的完整流程
