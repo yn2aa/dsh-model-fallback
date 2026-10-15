@@ -6,7 +6,7 @@
 
 通常的应用场景是，你接了几个免费鸡蛋渠道，或者多个小额度、有限额的渠道，跑长任务的时候模型经常会因为各种原因撞墙终止任务。有了model-fallback后能够在一定程度上解决这种问题。
 
-我还花了很多时间调整用户界面和使用体验，如果在外观和手感上有什么不顺手的地方也欢迎提交issue。
+除此之外，我还花了很多时间调整用户界面和使用体验，如果在外观和手感上有什么不顺手的地方也欢迎提交issue。
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-zero-blue.svg)](#构建)
