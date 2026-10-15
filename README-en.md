@@ -2,7 +2,11 @@
 
 简体中文 | [English](README-en.md)
 
-Give every primary model in DeepSeek Harness an **ordered candidate list**: when a request fails and the error class matches a trigger you checked, the next model on the chain takes over that request — the turn survives, and the session records why it moved.
+This plugin gives every primary model in DeepSeek Harness an **ordered candidate list**: when a request fails and the error class matches a trigger you checked, the next model on the chain takes over that request. The turn survives, and the session records why it moved.
+
+The usual case: you have hooked up a few free quota channels, or several small-quota, capped channels, and on long runs the model keeps hitting a wall and killing the task. model-fallback takes care of that to a degree.
+
+Beyond that, a lot of time also went into the interface and the feel of it. If anything about the look or the handling does not sit right, issues are welcome.
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![dependencies](https://img.shields.io/badge/dependencies-zero-blue.svg)](#build)
@@ -12,19 +16,19 @@ Give every primary model in DeepSeek Harness an **ordered candidate list**: when
 
 - **Visual editing**: Settings → Model Fallback Chains. Multiple chains live in one roster, drag to reorder, sort candidates by billing multiplier or context window.
 - **Triggers** (each independently switchable): rate limit (TPM/RPM), quota exhaustion, HTTP 5xx, timeout and network errors.
-- **Safe by default**: with zero chains the plugin does not intervene at all — no interception, no failover, no annotations. One file disables it at any time, no restart needed.
+- **Safe by default**: with no chains the plugin does not intervene — no interception, no failover, no annotations. One file turns it off at any time, no restart needed.
 
 Installation: [Install](#install). To see what it does first, [Configuring a chain](#configuring-a-chain) walks the UI.
 
 ## Why it exists
 
-Three facts confirmed against this machine:
+There are three facts confirmed on this machine:
 
 1. **The kernel has no cross-model fallback.** `@deepseek-ai/dsh-llm-retry` retries only the *same provider*, passing `provider` through unchanged; its `Config` explicitly rejects keys other than `retryPolicy`.
 2. **The local gateway has none either.** `127.0.0.1:8326`'s `POST /v1/chat/completions` splits out a single `{provider, model}` via `parseModelRoute` and calls `llm.stream()` once — no alias table, no model group, no fallback.
-3. **The error users actually hit is not local.** A byte-for-byte scan of the 121 MB `app.asar` and the whole profile `node_modules` found zero occurrences of `litellm`, `model_group`, `No fallback model group`, `raccoon-4eb26a`, `node03-rg`. That message is produced and passed through by the SenseTime upstream; the rate limit lives server-side.
+3. **The error you actually run into is not local.** A byte-for-byte scan of the 121 MB `app.asar` and the whole profile `node_modules` confirmed: `litellm`, `model_group`, `No fallback model group`, `raccoon-4eb26a`, `node03-rg` **all zero hits**. That message is produced and passed through by the SenseTime upstream; the rate limit lives server-side.
 
-So the only thing that can be done locally is: **when the local hop fails, move to another model.**
+So the only thing that can be done is: **when the local hop fails, move to another model.**
 
 ## Where it hooks in: two seams
 
@@ -87,12 +91,12 @@ error: profile "desktop" is managed exclusively by the Electron application
 
 The `desktop` profile belongs exclusively to the Electron application — it rewrites the profile's `package.json` and maintains the bundle list itself, so a CLI install would fight with it. The command is therefore **only meaningful for custom profiles such as `headless`**; for desktop, use Option 1 or Option 2.
 
-When `dsh` is not on PATH, invoke it by running the CLI with the Electron binary as node:
+When `dsh` is not on PATH, invoke it by running the CLI with the Electron binary as node (substitute your own DSH install location for `<DSH install dir>`):
 
 ```powershell
 $env:ELECTRON_RUN_AS_NODE = '1'
-& 'D:\DeepSeek Harness\DeepSeek Harness.exe' `
-  'D:\DeepSeek Harness\resources\app.asar\dsh\node_modules\@deepseek-ai\dsh\lib\bin.js' --help
+& '<DSH install dir>\DeepSeek Harness.exe' `
+  '<DSH install dir>\resources\app.asar\dsh\node_modules\@deepseek-ai\dsh\lib\bin.js' --help
 ```
 
 ### Option 4: by hand
@@ -130,7 +134,7 @@ Live client edits depend on `pnpm run dev:web` rebuilding the bundle; without th
 
 Open **Settings → Model Fallback Chains**. The page reads top to bottom: **the chain roster** (at the very top), the model catalogue, the candidate editor, cooling models, recent failovers.
 
-The last three only appear **after pressing a chain's 编辑 (Edit) button**, and they belong to that one chain — when nothing is being edited the page is just the roster, cooldowns and history, taking no space.
+The last three only appear **after pressing a chain's 编辑 (Edit) button**, and they belong to that one chain — when nothing is being edited the page is just the roster, cooldowns and history, taking up no space.
 
 ### Building a chain
 
@@ -141,21 +145,21 @@ The last three only appear **after pressing a chain's 编辑 (Edit) button**, an
    - The sort control is a **bare `↕` glyph** with no border or padding: a framed button would be wider than the numbers in the column and push each one forward.
    - **The header sticks to the top while scrolling** and is opaque, so rows never show through it.
    - The **来源** column is the `provider/model` identifier that ends up in `chains.json`.
-   - **Sorting has three states**: the catalogue opens with the **计费倍率** column already ascending (`↑`, cheapest first — you read the multiplier to pick cheap), one click makes it descending (`↓`), another enters `≡` **global sort**: the whole catalogue becomes one flat list with no channel separators, and the source column is information only. A fourth click returns to grouped ascending. The **上下文窗口** column behaves the same way. Models whose price or window is unknown sort last in both directions — flipping never puts "unknown" ahead of real numbers.
+   - **Sorting has three states**: the catalogue opens with the **计费倍率** column already ascending (`↑`, cheapest first, so you can pick a cheap model at leisure), one click makes it descending (`↓`), another enters `≡` **global sort**: the whole catalogue becomes one flat list with no channel separators, and the source column is information only. A fourth click returns to grouped ascending. The **上下文窗口** column behaves the same way. Models whose price or window is unknown sort last in both directions — flipping never puts "unknown" ahead of real numbers.
    - **Every channel heading can fold**: click the heading row (marked `▸`/`▾` on the left) to collapse or expand that channel's models. Folding is view-only and writes nothing; a group only shows when it has a matching row.
    - **The catalogue itself folds as a block**: click the `可用模型清单（N）` row (marked `▸`/`▾`) to collapse the whole table so it stops taking space once you have picked. The heading row always stays as the way back in. Folding is view-only and writes nothing. The chain currently being edited shows its primary on the same row, after 「当前主模型：」.
    - The catalogue and candidate picker are about 12 rows tall (440px / 340px), scrolling beyond that.
    - The search box matches **model name, channel name and identifier** (`kimi` or `workbuddy` both work), not just the identifier.
    - The catalogue comes straight from the running kernel's enumeration, so it follows channels adding or retiring models without a code change; when a context window cannot be resolved it shows 「未知」 rather than an invented number.
 2. Select the row you want as **primary** with the **radio button**, then press 「**设为回退链主模型**」 next to the search box to create the chain. If no chain exists yet, the top of the catalogue says 「还没有配置任何回退链。插件不会干预任何请求，行为与安装前一致。」 — **with no chains the plugin does not intervene at all**, which is the safe default.
-   - **One primary can have several chains** (for example two candidate sets to switch between). Only **one can be enabled at a time**: enabling a second disables the first and raises a dismissible notice. Disabling is not deleting — the configuration stays.
+   - **One primary can have several chains** (for example two candidate sets to switch between). But of the chains on one primary, **only one can be enabled at a time**: enabling a second disables the first and raises a dismissible notice.
    - A new chain enters the editing state immediately: the roster gains a row, named `回退链1`, `回退链2`, … automatically, with the catalogue and candidate editor below it.
-   - A new chain has **all three triggers checked by default** (rate limit / server error / timeout and network) and a depth of 3. If new chains defaulted to all off, you would assume the plugin was broken; the switches are right there on the chain, so turn off whatever you do not need.
+   - A new chain has **all three triggers checked by default** (rate limit / server error / timeout and network) and a depth of 3. If new chains defaulted to all off you would assume the plugin was broken; the switches sit below, so turn off whatever you do not need.
 3. Press the chain's 「**添加候选（勾选即加入）**」 and **tick** candidates in the list that opens: ticking adds one, unticking removes one — the tick state *is* the chain's content, so the list cannot disagree with the chain. Candidates already on the chain are still listed (otherwise there would be no box to untick) and shown as ticked.
-   - Ticking **does not move the page**: the new candidate row renders above the list and pushes it down; the plugin records the list's position before the write and scrolls back after render, so the checkbox under your cursor does not run away.
+   - Ticking **does not move the page**: the new candidate row renders above the list and pushes it down; the plugin records the list's position before the write and scrolls back after render, so the checkbox under your cursor does not run away. A small touch of mine that a good many plugin authors miss.
    - Once the chain is built, the candidate list can also be collapsed: click 「候选模型（N）」 on the **left** of the chain heading (marked `▸`/`▾`) to fold the candidate rows, leaving just the heading. Each chain folds independently. The mark sits on the left to line up with the catalogue's fold mark.
 4. Reorder candidates by **dragging** (hold the `⠿` icon before a candidate) or with the `↑`/`↓` buttons. Dragging is **scoped to its own chain** and never touches others. The order is written the moment the drop ends; one drag produces exactly one order write.
-5. Adjust the chain's **triggers** as needed (multi-select). The bold part is the switch name, the grey text the explanation:
+5. Adjust the chain's **triggers** as needed (multi-select). The bold part is the condition, the grey text the explanation:
    - **限流** — TPM/RPM or quota exhausted, upstream returns a rate-limit error, or every account is throttled. Typically per-minute token usage over the cap.
    - **服务端错误** — HTTP 5xx, upstream returns a server error. For transient upstream faults.
    - **超时与网络错误** — request timed out or the connection dropped.
@@ -170,7 +174,7 @@ The **top** of the settings page is a 「**回退链（N）**」 roster, **one r
 - **编辑 (Edit)** — the button on the right of each row; pressing it expands the catalogue and candidate editor that belong to that chain (press again to collapse). **Only one chain is edited at a time**; pressing another row's edit replaces the current panel. Folding and expanding are view state and write nothing.
 - **启用 (Enable)** — unchecking means this chain **does not take part in failover**, but its configuration for the primary stays intact; check it again to restore. A disabled row dims. A disabled chain is exactly equivalent to not having it, at runtime.
 - **重命名 (Rename)** — **double-click the chain name** to turn it into an input; Enter or clicking elsewhere saves (Esc cancels). The name is only a human label; a chain's identity is its own `id` (shown as the primary identifier when unnamed), so renaming cannot affect failover. Empty falls back to the primary identifier.
-- **删除 (Delete)** — the first click turns the button into 「确认删除」; the second deletes for real. This is a **two-step confirm**, because delete has no undo.
+- **删除 (Delete)** — the first click turns the button into 「确认删除」; the second deletes for real. This is a **two-step confirm**, since delete has no undo.
 
 **With no chains**, the middle of the roster holds an 「**添加链**」 button: press it to create an empty chain directly (primary TBD, name takes the next `回退链N`), then pick its primary in the catalogue. Once chains exist, that button moves to the right of the roster's heading row.
 
@@ -271,8 +275,8 @@ Chrome's headless `--screenshot` argument **must be an absolute path**; a relati
 
 ## Known limits
 
-- **No round-robin.** The kernel's `agent/request-error` payload carries no `model`, and every retry reuses the same already-rendered request assembly; the plugin can only change models at "the next attempt" granularity and cannot re-send one failure to another candidate on the chain. True round-robin means becoming a provider yourself (walking the chain inside the adapter's `stream()`) — a different order of magnitude, see the archived change's `implementation-notes.md` §36.
-- **A chain only applies to its own declared primary.** With no matching chain the error is reported as-is; there is no catch-all.
+- **Round-robin is hard with the current structure.** The kernel's `agent/request-error` payload carries no `model`, and every retry reuses the same already-rendered request assembly; the plugin can only change models at "the next attempt" granularity and cannot re-send one failure to another candidate on the chain. True round-robin means becoming a provider yourself (walking the chain inside the adapter's `stream()`) — a different order of magnitude, see the archived change's `implementation-notes.md` §36.
+- **A chain only applies to its own declared primary.** With no matching chain the error is reported as-is.
 - **The gateway layer (127.0.0.1:8326) is out of scope.** Session requests go through `ctx.llm` and never touch the gateway.
 
 ## License
@@ -303,6 +307,6 @@ scratch/              previewer, pre-flight, asar extractor and other dev tools 
 
 ## Status
 
-The host-side failover logic, the three seam wirings, the settings API and the settings UI are all implemented with unit-test coverage (`npm test` green). **Real end-to-end acceptance is complete**: rate limit (`RATE_LIMIT`), server error (`SERVER`) and quota exhaustion (`QUOTA_EXCEEDED`) have all triggered an automatic failover in practice, the turn survived, and a model-switch notice was inserted into the session; "no failover when the trigger does not match", "empty config equivalence", "context-window filtering skips candidates" and "catalogue source changes" all have measured evidence (see the archived change's `acceptance-evidence.md`).
+The host-side failover logic, the three seam wirings, the settings API and the settings UI are all implemented with unit-test coverage (`npm test` green). **Real end-to-end acceptance is complete**: rate limit (`RATE_LIMIT`), server error (`SERVER`) and quota exhaustion (`QUOTA_EXCEEDED`) have all triggered an automatic failover in practice, the turn survived, and a model-switch notice was inserted into the session; "no failover when the trigger does not match", "empty config equivalence", "context-window filtering skips candidates" and "catalogue source changes" all have measured evidence too (see the archived change's `acceptance-evidence.md`).
 
 **Does not intervene by default**: with zero chains the request path is exactly what it was before installation — no interception, no failover, no annotations.
