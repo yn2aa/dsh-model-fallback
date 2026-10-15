@@ -1,0 +1,54 @@
+{
+  "name": "dsh-model-fallback",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Model fallback chains for DeepSeek Harness: an ordered per-model failover list, editable in Settings with drag-to-reorder, applied at the kernel's agent/request seam.",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./chains": "./lib/chains.js",
+    "./failover": "./lib/failover.js",
+    "./cooldown": "./lib/cooldown.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "README-en.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yn2aa/dsh-model-fallback.git"
+  },
+  "homepage": "https://github.com/yn2aa/dsh-model-fallback#readme",
+  "bugs": "https://github.com/yn2aa/dsh-model-fallback/issues",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "fallback",
+    "failover",
+    "model-routing",
+    "llm"
+  ]
+}

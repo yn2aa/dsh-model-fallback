@@ -1,0 +1,5 @@
+# Normalize to LF in the repository. Without this, Windows users commit CRLF
+# and everyone else gets whole-file diffs.
+* text=auto eol=lf
+*.png binary
+*.html -text

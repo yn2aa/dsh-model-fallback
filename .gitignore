@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build / package artefacts
+*.tgz
+*.zip
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# local scratch output (screenshots, rendered previews, captured test output)
+scratch/*.png
+scratch/*.html
+scratch/*.txt
+scratch/*.log
+scratch/kernel/
+scratch/*.json.bak*
+
+# personal handoff notes: they carry this machine's absolute paths
+scratch/NEXT.md
+scratch/RESTORE.md
+scratch/ROUND-STATUS.md
+
+# editor / OS
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,13 @@
+// Debug the asar header layout: print the first bytes and the parsed sizes.
+const fs = require('fs')
+const { requireAsar } = require('./asar-path.cjs')
+const ASAR = requireAsar()
+const fd = fs.openSync(ASAR, 'r')
+const head = Buffer.alloc(64)
+fs.readSync(fd, head, 0, 64, 0)
+console.log('first 64 bytes hex:', head.toString('hex'))
+console.log('u32@0 =', head.readUInt32LE(0))
+console.log('u32@4 =', head.readUInt32LE(4))
+console.log('u32@8 =', head.readUInt32LE(8))
+console.log('first 32 as utf8:', JSON.stringify(head.toString('utf8').slice(0, 32)))
+fs.closeSync(fd)

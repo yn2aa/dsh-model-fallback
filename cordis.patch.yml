@@ -1,0 +1,8 @@
+# dsh-model-fallback bundle patch layer.
+#
+# Declares the plugin's own loader entry, inserted into the profile tree.
+# `name` MUST equal the installed package specifier or the loader warns and
+# skips the row.
+- insert:
+    - id: model-fallback
+      name: 'dsh-model-fallback'
